@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <fstream>
+#include <wingdi.h>
 #include "Include/resouse.hpp"
 #include "Include/Calculate.hpp"
 #include "Include/Evolution.hpp"
@@ -12,9 +13,14 @@
 #pragma comment(lib, "User32.lib")
 #pragma comment(lib, "Shell32.lib")
 
+#pragma comment(linker,"\"/manifestdependency:type='win32' \
+                           name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
+                           processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+
 using namespace std;
 
 constexpr int CUBE = 25;
+HDC HDc;
 RECT WindowRect = {30, 30, 730, 530}, ClientRect, DataArea = {0, 0, 150, 0}, PaintArea;
 HRGN CellRgn;
 SIZE MapSize = {50, 50};
@@ -62,7 +68,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         WindowRect.left, WindowRect.top, WindowRect.right - WindowRect.left, WindowRect.bottom - WindowRect.top,
            NULL, NULL, hInstance, NULL);
     HACCEL Acclerator = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDR_ACC));
-    Cell::Hdc = GetDC(Handle);
+    Cell::Hdc = HDc = GetDC(Handle);
     ShowWindow(Handle, nCmdShow);
     UpdateWindow(Handle);
     //*消息循环分发
@@ -82,7 +88,6 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 //*主窗口窗口过程
 LRESULT CALLBACK WindowProcess(HWND Handle, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
-    HDC Hdc;
     PAINTSTRUCT Ps;
     TCHAR Time[] = TEXT("Time:"), SelectedCeil[] = TEXT("Ceil:"), Wealth[] = TEXT("Wealth:"), Limit[] = TEXT("Limit:");
     static RECT TimeRect, TimeArea, CellRect, PosRect, WealthRect, ValueRect, ShowRect, BUTGORECT, BUTSTOPRECT, BUTENDRECT, LimitRect, LimEdRect, ProRect, StaticRect;
@@ -103,9 +108,13 @@ LRESULT CALLBACK WindowProcess(HWND Handle, UINT Msg, WPARAM wParam, LPARAM lPar
     {
     case WM_CREATE:
     {   //*初始化窗口
+
+        HDc = GetDC(Handle);
+
         DrawTextParams.cbSize = sizeof(DRAWTEXTPARAMS);
         WindowRect.bottom += GetSystemMetrics(SM_CYHSCROLL);
         WindowRect.right += GetSystemMetrics(SM_CXVSCROLL);
+
         AdjustWindowRectEx(&WindowRect, GetWindowLongPtr(Handle, GWL_STYLE), GetMenu(Handle) != NULL, GetWindowLongPtr(Handle, GWL_EXSTYLE));
         SetWindowPos(Handle, HWND_TOPMOST, 0, 0, WindowRect.right - WindowRect.left, WindowRect.bottom - WindowRect.top, SWP_NOMOVE);
         OffsetRect(&WindowRect, -WindowRect.left, -WindowRect.top);
@@ -121,30 +130,29 @@ LRESULT CALLBACK WindowProcess(HWND Handle, UINT Msg, WPARAM wParam, LPARAM lPar
         }
         HScrollInfo.cbSize = sizeof(SCROLLINFO);
         VScrollInfo.cbSize = sizeof(SCROLLINFO);
-        Hdc = GetDC(Handle);
         SIZE TextSize;
-        SelectObject(Hdc, HFont);
-        GetTextExtentPoint32(Hdc, Time, _tcslen(Time), &TextSize);
+        SelectObject(HDc, HFont);
+        GetTextExtentPoint32(HDc, Time, _tcslen(Time), &TextSize);
         TimeRect = {0, 0, TextSize.cx, TextSize.cy};
         TimeArea = {TimeRect.right, TimeRect.top, DataArea.right, TimeRect.bottom - TimeRect.top};
-        GetTextExtentPoint32(Hdc, SelectedCeil, _tcslen(SelectedCeil), &TextSize);
+        GetTextExtentPoint32(HDc, SelectedCeil, _tcslen(SelectedCeil), &TextSize);
         CellRect = {0, TimeRect.bottom, TextSize.cx, TimeRect.bottom + TextSize.cy};
         SetRect(&PosRect, CellRect.right, CellRect.top, DataArea.right, CellRect.bottom);
-        GetTextExtentPoint32(Hdc, Wealth, _tcslen(Wealth), &TextSize);
+        GetTextExtentPoint32(HDc, Wealth, _tcslen(Wealth), &TextSize);
         WealthRect = {0, CellRect.bottom, TextSize.cx, CellRect.bottom + TextSize.cy};
         SetRect(&ValueRect, WealthRect.right, WealthRect.top, DataArea.right, WealthRect.bottom);
         ShowRect = {10, WealthRect.bottom + 10, DataArea.right - 10, WealthRect.bottom + 140};
         CellRgn = CreateRectRgnIndirect(&ShowRect);
-        ReleaseDC(Handle, Hdc);
 
         SetRect(&BUTGORECT, ShowRect.left, ShowRect.bottom + 10, ShowRect.left + 60, ShowRect.bottom + 40);
         SetRect(&BUTSTOPRECT, BUTGORECT.right + 10, BUTGORECT.top, BUTGORECT.right + 70, BUTGORECT.bottom);
         SetRect(&BUTENDRECT, BUTGORECT.left, BUTGORECT.bottom + 10, BUTSTOPRECT.right, BUTGORECT.bottom + 40);
-        GetTextExtentPoint32(Hdc, Limit, _tcslen(Limit), &TextSize);
+
+        GetTextExtentPoint32(HDc, Limit, _tcslen(Limit), &TextSize);
         LimitRect = {TimeRect.left, BUTENDRECT.bottom + 10, TimeRect.left + TextSize.cx, BUTENDRECT.bottom + TextSize.cy + 10};
         LimEdRect = {LimitRect.right + 2, LimitRect.top - 1, DataArea.right - 5, LimitRect.bottom + 1};
-        ProRect = {LimitRect.left + 5, LimEdRect.bottom + 10, LimEdRect.right, LimEdRect.bottom + 10 + 30};
-        StaticRect = {ProRect.left, ProRect.bottom + 10, ProRect.right, ProRect.bottom + 10 + 40};
+        ProRect = {LimitRect.left + 5, LimEdRect.bottom + 10, LimEdRect.right, LimEdRect.bottom + 40};
+        StaticRect = {ProRect.left, ProRect.bottom + 10, ProRect.right, ProRect.bottom + 50};
 
         ButGo = CreateWindowEx(0, TEXT("BUTTON"), TEXT("GO"),
               WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
@@ -497,14 +505,12 @@ LRESULT CALLBACK WindowProcess(HWND Handle, UINT Msg, WPARAM wParam, LPARAM lPar
             return 0;
         }
         EnterCriticalSection(&EvolutionData::CriticalSection);
-        Hdc = GetDC(Handle);
         TCHAR TimeText[20];
         _stprintf_s(TimeText, TEXT("%0.1f"), count * 0.1);
         _tcscat_s(TimeText, _countof(TimeText), TEXT("s"));
-        FillRect(Hdc, &TimeArea, WHITE_BRUSH);
-        SelectObject(Hdc, HFont);
-        DrawTextEx(Hdc, TimeText, _tcslen(TimeText), &TimeArea, DT_LEFT | DT_SINGLELINE, &DrawTextParams);
-        ReleaseDC(Handle, Hdc);
+        FillRect(HDc, &TimeArea, WHITE_BRUSH);
+        SelectObject(HDc, HFont);
+        DrawTextEx(HDc, TimeText, _tcslen(TimeText), &TimeArea, DT_LEFT | DT_SINGLELINE, &DrawTextParams);
         LeaveCriticalSection(&EvolutionData::CriticalSection);
         PostThreadMessage(EvolutionData::EvolutionThreadID, WM_TIMER, 0, 0);
         return 0;
@@ -529,7 +535,7 @@ LRESULT CALLBACK WindowProcess(HWND Handle, UINT Msg, WPARAM wParam, LPARAM lPar
     case WM_PAINT:
     {   //*绘图
         EnterCriticalSection(&EvolutionData::CriticalSection);
-        Hdc = BeginPaint(Handle, &Ps);
+        BeginPaint(Handle, &Ps);
         HScrollInfo.fMask = SIF_POS;
         VScrollInfo.fMask = SIF_POS;
         GetScrollInfo(Handle, SB_HORZ, &HScrollInfo);
@@ -545,7 +551,7 @@ LRESULT CALLBACK WindowProcess(HWND Handle, UINT Msg, WPARAM wParam, LPARAM lPar
             {
                 SetRect(&Cell, DataArea.right + m * CUBE - HScrollInfo.nPos * CUBE, n * CUBE - VScrollInfo.nPos * CUBE, DataArea.right + (m + 1) * CUBE - HScrollInfo.nPos * CUBE, (n + 1) * CUBE - VScrollInfo.nPos * CUBE);
                 HBRUSH Brush = CreateSolidBrush(Map[n][m].Color);
-                FillRect(Hdc, &Cell, Brush);
+                FillRect(HDc, &Cell, Brush);
                 DeleteObject(Brush);
             }
         }
@@ -957,7 +963,7 @@ LRESULT CALLBACK WindowProcess(HWND Handle, UINT Msg, WPARAM wParam, LPARAM lPar
         DeleteObject(CellRgn);
         CloseHandle(EvoluThread);
         DeleteObject(Font);
-        ReleaseDC(Handle, Cell::Hdc);
+        ReleaseDC(Handle, HDc);
         DeleteCriticalSection(&EvolutionData::CriticalSection);
         return 0;
     }
