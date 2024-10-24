@@ -1,8 +1,10 @@
 #include "../Include/Calculate.hpp"
 #include "../Include/Evolution.hpp"
 #include <queue>
-#define BottomLeftCorner ChannelGraph[AliveCell[before].x * MapSize.cy + AliveCell[before].y][AliveCell[after].x * MapSize.cy + AliveCell[after].y]
-#define TopRightCorner ChannelGraph[AliveCell[after].x * MapSize.cy + AliveCell[after].y][AliveCell[before].x * MapSize.cy + AliveCell[before].y]
+#define BottomLeftCorner \
+    ChannelGraph[AliveCell[before].x * MapSize.cy + AliveCell[before].y][AliveCell[after].x * MapSize.cy + AliveCell[after].y]
+#define TopRightCorner \
+    ChannelGraph[AliveCell[after].x * MapSize.cy + AliveCell[after].y][AliveCell[before].x * MapSize.cy + AliveCell[before].y]
 static vector<vector<POINT>> Path(1);
 extern SIZE MapSize;
 extern vector<vector<Cell>> Map;
@@ -18,7 +20,7 @@ struct Comparator
         return (abs(a.x - End.x) + abs(a.y - End.y)) > (abs(b.x - End.x) + abs(b.y - End.y));
     }
 };
-POINT Comparator::End = {-1, -1};
+POINT Comparator::End = { -1, -1 };
 //* A* Algorithm
 POINT *A_Star_Algorithm(POINT Start, POINT End)
 {
@@ -27,7 +29,7 @@ POINT *A_Star_Algorithm(POINT Start, POINT End)
     priority_queue<POINT, vector<POINT>, Comparator> Mem;
     Mem.push(Start);
     CalculateMap[Start.x][Start.y].Visited = Flag;
-    CalculateMap[Start.x][Start.y].Before = {-1, -1};
+    CalculateMap[Start.x][Start.y].Before  = { -1, -1 };
     POINT Now;
     while (!Mem.empty())
     {
@@ -36,32 +38,32 @@ POINT *A_Star_Algorithm(POINT Start, POINT End)
         if (Now.x == End.x && Now.y == End.y)
         {
             Flag++;
-            //POINT Temp = Now;
+            // POINT Temp = Now;
             return new POINT(Now);
         }
         if (Now.x > 0 && Map[Now.x - 1][Now.y].State && CalculateMap[Now.x - 1][Now.y].Visited != Flag)
         {
-            Mem.push({Now.x - 1, Now.y});
+            Mem.push({ Now.x - 1, Now.y });
             CalculateMap[Now.x - 1][Now.y].Visited = Flag;
-            CalculateMap[Now.x - 1][Now.y].Before = Now;
+            CalculateMap[Now.x - 1][Now.y].Before  = Now;
         }
         if (Now.x < MapSize.cx - 1 && Map[Now.x + 1][Now.y].State && CalculateMap[Now.x + 1][Now.y].Visited != Flag)
         {
-            Mem.push({Now.x + 1, Now.y});
+            Mem.push({ Now.x + 1, Now.y });
             CalculateMap[Now.x + 1][Now.y].Visited = Flag;
-            CalculateMap[Now.x + 1][Now.y].Before = Now;
+            CalculateMap[Now.x + 1][Now.y].Before  = Now;
         }
         if (Now.y > 0 && Map[Now.x][Now.y - 1].State && CalculateMap[Now.x][Now.y - 1].Visited != Flag)
         {
-            Mem.push({Now.x, Now.y - 1});
+            Mem.push({ Now.x, Now.y - 1 });
             CalculateMap[Now.x][Now.y - 1].Visited = Flag;
-            CalculateMap[Now.x][Now.y - 1].Before = Now;
+            CalculateMap[Now.x][Now.y - 1].Before  = Now;
         }
         if (Now.y < MapSize.cy - 1 && Map[Now.x][Now.y + 1].State && CalculateMap[Now.x][Now.y + 1].Visited != Flag)
         {
-            Mem.push({Now.x, Now.y + 1});
+            Mem.push({ Now.x, Now.y + 1 });
             CalculateMap[Now.x][Now.y + 1].Visited = Flag;
-            CalculateMap[Now.x][Now.y + 1].Before = Now;
+            CalculateMap[Now.x][Now.y + 1].Before  = Now;
         }
     }
     Flag++;
@@ -71,7 +73,7 @@ POINT *A_Star_Algorithm(POINT Start, POINT End)
 DWORD WINAPI Calculation(LPVOID Paramter)
 {
     ChannelGraph = vector<vector<vector<POINT>>>(MapSize.cy * MapSize.cx, vector<vector<POINT>>(MapSize.cy * MapSize.cx));
-    int num = AliveCell.size();
+    int num      = AliveCell.size();
     for (int before = 0; before < num - 1; before++)
     {
         for (int after = before + 1; after < num; after++)

@@ -1,5 +1,4 @@
 #include"../Include/resouse.hpp"
-CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "main.exe.xml"
 ID_MENU MENU
 BEGIN
     POPUP TEXT("нд╪Ч")
