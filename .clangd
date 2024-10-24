@@ -1,0 +1,2 @@
+CompileFlags:
+  Add: [-std=c++17, -IInclude, -O3,-std=c++17]
